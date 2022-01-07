@@ -7,26 +7,39 @@ pub struct Random {
 }
 
 impl Random {
-    fn new(seed: i32) -> Self {
-        Self { state: seed as i64 }
+    pub fn new(seed: i64) -> Self {
+        Self {
+            state: Self::initalize_state(seed),
+        }
     }
 
-    fn next_i32(&self) -> i32 {
+    fn initalize_state(seed: i64) -> i64 {
+        seed ^ MULTIPLIER & MASK
+    }
+
+    fn next(&mut self, bits: u8) -> i32 {
+        self.state = self.state.wrapping_mul(MULTIPLIER).wrapping_add(INCREMENT) & MASK;
+        (self.state >> (48 - bits)) as i32
+    }
+
+    pub fn next_i32(&mut self) -> i32 {
+        self.next(32)
+    }
+
+    pub fn next_i64(&mut self) -> i64 {
+        ((self.next(32) as i64) << 32) + (self.next(32) as i64)
+    }
+
+    pub fn next_bool(&mut self) -> bool {
         unimplemented!()
     }
-    fn next_i64(&self) -> i64 {
+    pub fn next_f32(&mut self) -> f32 {
         unimplemented!()
     }
-    fn next_bool(&self) -> bool {
+    pub fn next_f64(&mut self) -> f64 {
         unimplemented!()
     }
-    fn next_f32(&self) -> f32 {
-        unimplemented!()
-    }
-    fn next_f64(&self) -> f64 {
-        unimplemented!()
-    }
-    fn next_bytes(&self, bytes: &mut [i8]) {
+    pub fn next_bytes(&mut self, bytes: &mut [i8]) {
         unimplemented!()
     }
 }
@@ -36,47 +49,57 @@ mod tests {
     use super::*;
     use std::include;
 
-    const SEED: i32 = 12345;
+    const SEED: i64 = 12345;
 
     #[test]
     fn next_i32() {
         let test_data = include!("..\\generated\\integers.data");
-        let random = Random::new(SEED);
+        let mut random = Random::new(SEED);
         for integer in test_data {
             assert_eq!(random.next_i32(), integer);
         }
     }
+
+    #[test]
     fn next_i64() {
         let test_data = include!("..\\generated\\longs.data");
-        let random = Random::new(SEED);
+        let mut random = Random::new(SEED);
         for integer in test_data {
             assert_eq!(random.next_i64(), integer);
         }
     }
+
+    #[test]
     fn next_f32() {
         let test_data = include!("..\\generated\\floats.data");
-        let random = Random::new(SEED);
+        let mut random = Random::new(SEED);
         for integer in test_data {
             assert_eq!(random.next_f32(), integer);
         }
     }
+
+    #[test]
     fn next_f64() {
         let test_data = include!("..\\generated\\doubles.data");
-        let random = Random::new(SEED);
+        let mut random = Random::new(SEED);
         for integer in test_data {
             assert_eq!(random.next_f64(), integer);
         }
     }
+
+    #[test]
     fn next_bool() {
         let test_data = include!("..\\generated\\booleans.data");
-        let random = Random::new(SEED);
+        let mut random = Random::new(SEED);
         for integer in test_data {
             assert_eq!(random.next_bool(), integer);
         }
     }
+
+    #[test]
     fn next_bytes() {
         let test_data = include!("..\\generated\\bytes.data");
-        let random = Random::new(SEED);
+        let mut random = Random::new(SEED);
         let mut bytes = [0_i8; 10];
         random.next_bytes(&mut bytes);
         for i in 0..10 {
