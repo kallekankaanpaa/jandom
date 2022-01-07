@@ -1,3 +1,5 @@
+use std::fmt;
+
 const MULTIPLIER: i64 = 0x5deece66d;
 const INCREMENT: i64 = 0xb;
 const MASK: i64 = (1 << 48) - 1;
@@ -57,6 +59,16 @@ impl Random {
                 random = random >> 8;
             }
         }
+    }
+}
+
+/// Implemented custom Debug in order to prevent users from leaking the internal state
+impl fmt::Debug for Random {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Random number generator implemented with the same algorithm as java.util.Random"
+        )
     }
 }
 
