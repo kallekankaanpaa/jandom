@@ -34,10 +34,10 @@ impl Random {
         self.next(1) != 0
     }
     pub fn next_f32(&mut self) -> f32 {
-        unimplemented!()
+        self.next(24) as f32 / ((1 << 24) as f32)
     }
     pub fn next_f64(&mut self) -> f64 {
-        unimplemented!()
+        ((((self.next(26) as i64) << 27) + (self.next(27) as i64)) as f64) / ((1_i64 << 53) as f64)
     }
 
     pub fn next_bytes(&mut self, bytes: &mut [i8]) {
