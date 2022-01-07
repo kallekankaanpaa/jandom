@@ -13,6 +13,7 @@ public class GenRandomResults {
     static Path outputPath = Path.of("./generated");
 
     public static void main(String[] args) {
+        System.out.println("Running random data generator");
         // Generate output folder
         if (!Files.isDirectory(outputPath)) {
             try {

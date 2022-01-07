@@ -53,7 +53,11 @@ mod tests {
 
     #[test]
     fn next_i32() {
-        let test_data = include!("..\\generated\\integers.data");
+        let test_data = if cfg!(target_os = "windows") {
+            include!("..\\generated\\integers.data")
+        } else {
+            include!("../generated/integers.data")
+        };
         let mut random = Random::new(SEED);
         for integer in test_data {
             assert_eq!(random.next_i32(), integer);
@@ -62,7 +66,11 @@ mod tests {
 
     #[test]
     fn next_i64() {
-        let test_data = include!("..\\generated\\longs.data");
+        let test_data = if cfg!(target_os = "windows") {
+            include!("..\\generated\\longs.data")
+        } else {
+            include!("../generated/longs.data")
+        };
         let mut random = Random::new(SEED);
         for integer in test_data {
             assert_eq!(random.next_i64(), integer);
@@ -71,7 +79,11 @@ mod tests {
 
     #[test]
     fn next_f32() {
-        let test_data = include!("..\\generated\\floats.data");
+        let test_data = if cfg!(target_os = "windows") {
+            include!("..\\generated\\floats.data")
+        } else {
+            include!("../generated/floats.data")
+        };
         let mut random = Random::new(SEED);
         for integer in test_data {
             assert_eq!(random.next_f32(), integer);
@@ -80,7 +92,11 @@ mod tests {
 
     #[test]
     fn next_f64() {
-        let test_data = include!("..\\generated\\doubles.data");
+        let test_data = if cfg!(target_os = "windows") {
+            include!("..\\generated\\doubles.data")
+        } else {
+            include!("../generated/doubles.data")
+        };
         let mut random = Random::new(SEED);
         for integer in test_data {
             assert_eq!(random.next_f64(), integer);
@@ -89,7 +105,11 @@ mod tests {
 
     #[test]
     fn next_bool() {
-        let test_data = include!("..\\generated\\booleans.data");
+        let test_data = if cfg!(target_os = "windows") {
+            include!("..\\generated\\booleans.data")
+        } else {
+            include!("../generated/booleans.data")
+        };
         let mut random = Random::new(SEED);
         for integer in test_data {
             assert_eq!(random.next_bool(), integer);
@@ -98,7 +118,11 @@ mod tests {
 
     #[test]
     fn next_bytes() {
-        let test_data = include!("..\\generated\\bytes.data");
+        let test_data = if cfg!(target_os = "windows") {
+            include!("..\\generated\\bytes.data")
+        } else {
+            include!("../generated/bytes.data")
+        };
         let mut random = Random::new(SEED);
         let mut bytes = [0_i8; 10];
         random.next_bytes(&mut bytes);
