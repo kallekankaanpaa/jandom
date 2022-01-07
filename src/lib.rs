@@ -60,6 +60,16 @@ impl Random {
     }
 }
 
+impl Default for Random {
+    fn default() -> Self {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let elapsed = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("SystemTime returned value earlier than UNIX_EPOCH");
+        Self::new(elapsed.as_millis() as i64)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
