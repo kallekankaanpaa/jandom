@@ -31,7 +31,7 @@ impl Random {
     }
 
     pub fn next_bool(&mut self) -> bool {
-        unimplemented!()
+        self.next(1) != 0
     }
     pub fn next_f32(&mut self) -> f32 {
         unimplemented!()
@@ -39,8 +39,24 @@ impl Random {
     pub fn next_f64(&mut self) -> f64 {
         unimplemented!()
     }
+
     pub fn next_bytes(&mut self, bytes: &mut [i8]) {
-        unimplemented!()
+        let max = bytes.len() & !0x3;
+
+        for i in (0..max).step_by(4) {
+            let random = self.next(32);
+            bytes[i] = random as i8;
+            bytes[i + 1] = (random >> 8) as i8;
+            bytes[i + 2] = (random >> 16) as i8;
+            bytes[i + 3] = (random >> 24) as i8;
+        }
+        if max < bytes.len() {
+            let mut random = self.next(32);
+            for j in max..bytes.len() {
+                bytes[j] = random as i8;
+                random = random >> 8;
+            }
+        }
     }
 }
 
