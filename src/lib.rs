@@ -244,7 +244,7 @@ mod tests {
             include!("../generated/bytes.data")
         };
         let mut random = Random::new(SEED);
-        let mut bytes = [0_i8; 10];
+        let mut bytes = [0_i8; 100];
         random.next_bytes(&mut bytes);
         for i in 0..10 {
             assert_eq!(test_data[i], bytes[i]);

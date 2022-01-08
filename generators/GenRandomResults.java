@@ -10,6 +10,7 @@ import java.nio.file.Files;
 public class GenRandomResults {
 
     static long seed = 12345;
+    static int dataLength = 100;
     static Path outputPath = Path.of("./generated");
 
     public static void main(String[] args) {
@@ -26,7 +27,7 @@ public class GenRandomResults {
 
         Random rand = new Random(seed);
         List<String> integers = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < dataLength; i++) {
             integers.add(String.valueOf(rand.nextInt()));
         }
 
@@ -39,7 +40,7 @@ public class GenRandomResults {
 
         rand = new Random(seed);
         List<String> longs = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < dataLength; i++) {
             longs.add(String.valueOf(rand.nextLong()));
         }
 
@@ -52,7 +53,7 @@ public class GenRandomResults {
 
         rand = new Random(seed);
         List<String> floats = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < dataLength; i++) {
             floats.add(String.valueOf(rand.nextFloat()));
         }
 
@@ -65,7 +66,7 @@ public class GenRandomResults {
 
         rand = new Random(seed);
         List<String> doubles = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < dataLength; i++) {
             doubles.add(String.valueOf(rand.nextDouble()));
         }
 
@@ -78,7 +79,7 @@ public class GenRandomResults {
 
         rand = new Random(seed);
         List<String> booleans = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < dataLength; i++) {
             booleans.add(String.valueOf(rand.nextBoolean()));
         }
 
@@ -90,7 +91,7 @@ public class GenRandomResults {
         }
 
         rand = new Random(seed);
-        byte[] bytes = new byte[10];
+        byte[] bytes = new byte[dataLength];
         rand.nextBytes(bytes);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.resolve("bytes.data").toFile()))) {
@@ -107,7 +108,7 @@ public class GenRandomResults {
 
         rand = new Random(seed);
         List<String> boundedIntegers = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < dataLength; i++) {
             boundedIntegers.add(String.valueOf(rand.nextInt(((int) seed) + i)));
         }
 
@@ -121,7 +122,7 @@ public class GenRandomResults {
 
         rand = new Random(seed);
         List<String> gaussians = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < dataLength; i++) {
             gaussians.add(String.valueOf(rand.nextGaussian()));
         }
 
