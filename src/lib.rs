@@ -1,5 +1,7 @@
 use std::fmt;
 
+mod strict_math;
+
 // Maybe into iterator
 
 const MULTIPLIER: i64 = 0x5deece66d;
@@ -105,7 +107,7 @@ impl Random {
                     break;
                 }
             }
-            let multiplier = (-2_f64 * s.ln() / s).sqrt();
+            let multiplier = strict_math::sqrt(-2_f64 * strict_math::log(s) / s);
             self.next_next_gaussian = Some(v2 * multiplier);
             v1 * multiplier
         }
@@ -126,7 +128,7 @@ impl Default for Random {
     fn default() -> Self {
         use std::time::{SystemTime, UNIX_EPOCH};
 
-        let uniquifier: i64 = 8682522807148012_i64 * 1181783497276652981_i64;
+        let uniquifier: i64 = 8682522807148012_i64.wrapping_mul(1181783497276652981_i64);
 
         let elapsed = SystemTime::now()
             .duration_since(UNIX_EPOCH)
