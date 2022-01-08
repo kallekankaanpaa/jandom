@@ -104,6 +104,20 @@ public class GenRandomResults {
             System.err.println("writing generated test data failed");
             System.err.println(ioException);
         }
+
+        rand = new Random(seed);
+        List<String> boundedIntegers = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            boundedIntegers.add(String.valueOf(rand.nextInt(((int) seed) + i)));
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(
+                new FileWriter(outputPath.resolve("bounded_integers.data").toFile()))) {
+            writer.write(String.format("[%s]", String.join(",", boundedIntegers)));
+        } catch (IOException ioException) {
+            System.err.println("writing generated test data failed");
+            System.err.println(ioException);
+        }
     }
 
 }

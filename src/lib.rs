@@ -1,5 +1,7 @@
 use std::fmt;
 
+// Maybe into iterator
+
 const MULTIPLIER: i64 = 0x5deece66d;
 const INCREMENT: i64 = 0xb;
 const MASK: i64 = (1 << 48) - 1;
@@ -26,6 +28,30 @@ impl Random {
 
     pub fn next_i32(&mut self) -> i32 {
         self.next(32)
+    }
+
+    pub fn next_i32_bounded(&mut self, bound: i32) -> i32 {
+        if bound <= 0 {
+            panic!("bound can't be less than 1");
+        }
+
+        // bound is power of 2
+        if (bound & -bound) == bound {
+            let bound_i64 = bound as i64;
+            let next_i64 = self.next(31) as i64;
+            let result = bound_i64.wrapping_mul(next_i64) >> 31;
+            //(((bound as i64) * (self.next(32) as i64)) >> 31) as i32
+            result as i32
+        } else {
+            loop {
+                let bits = self.next(31);
+                let val = bits % bound;
+                if !bits.wrapping_sub(val).wrapping_add(bound.wrapping_sub(1)) < 0 {
+                    //if bits - val + (bound - 1) < 0 {
+                    return val;
+                }
+            }
+        }
     }
 
     pub fn next_i64(&mut self) -> i64 {
@@ -75,10 +101,13 @@ impl fmt::Debug for Random {
 impl Default for Random {
     fn default() -> Self {
         use std::time::{SystemTime, UNIX_EPOCH};
+
+        let uniquifier: i64 = 8682522807148012_i64 * 1181783497276652981_i64;
+
         let elapsed = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("SystemTime returned value earlier than UNIX_EPOCH");
-        Self::new(elapsed.as_millis() as i64)
+        Self::new(uniquifier ^ (elapsed.as_nanos() as i64))
     }
 }
 
@@ -99,6 +128,22 @@ mod tests {
         let mut random = Random::new(SEED);
         for integer in test_data {
             assert_eq!(random.next_i32(), integer);
+        }
+    }
+
+    #[test]
+    fn next_i32_bounded() {
+        let test_data = if cfg!(target_os = "windows") {
+            include!("..\\generated\\bounded_integers.data")
+        } else {
+            include!("../generated/bounded_integers.data")
+        };
+        let mut random = Random::new(SEED);
+        for (index, integer) in test_data.into_iter().enumerate() {
+            assert_eq!(
+                random.next_i32_bounded((SEED as i32) + (index as i32)),
+                integer
+            );
         }
     }
 
