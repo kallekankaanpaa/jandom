@@ -118,6 +118,20 @@ public class GenRandomResults {
             System.err.println("writing generated test data failed");
             System.err.println(ioException);
         }
+
+        rand = new Random(seed);
+        List<String> gaussians = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            gaussians.add(String.valueOf(rand.nextGaussian()));
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(
+                new FileWriter(outputPath.resolve("gaussians.data").toFile()))) {
+            writer.write(String.format("[%s]", String.join(",", gaussians)));
+        } catch (IOException ioException) {
+            System.err.println("writing generated test data failed");
+            System.err.println(ioException);
+        }
     }
 
 }

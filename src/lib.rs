@@ -8,12 +8,14 @@ const MASK: i64 = (1 << 48) - 1;
 
 pub struct Random {
     state: i64,
+    next_next_gaussian: Option<f64>,
 }
 
 impl Random {
     pub fn new(seed: i64) -> Self {
         Self {
             state: Self::initalize_state(seed),
+            next_next_gaussian: None,
         }
     }
 
@@ -86,6 +88,28 @@ impl Random {
             }
         }
     }
+
+    pub fn next_gaussian(&mut self) -> f64 {
+        if let Some(gaussian) = self.next_next_gaussian {
+            self.next_next_gaussian = None;
+            gaussian
+        } else {
+            let mut s;
+            let mut v1;
+            let mut v2;
+            loop {
+                v1 = 2_f64 * self.next_f64() - 1_f64;
+                v2 = 2_f64 * self.next_f64() - 1_f64;
+                s = v1 * v1 + v2 * v2;
+                if !(s >= 1_f64 || s == 0_f64) {
+                    break;
+                }
+            }
+            let multiplier = (-2_f64 * s.ln() / s).sqrt();
+            self.next_next_gaussian = Some(v2 * multiplier);
+            v1 * multiplier
+        }
+    }
 }
 
 /// Implemented custom Debug in order to prevent users from leaking the internal state
@@ -117,6 +141,19 @@ mod tests {
     use std::include;
 
     const SEED: i64 = 12345;
+
+    #[test]
+    fn next_gaussian() {
+        let test_data = if cfg!(target_os = "windows") {
+            include!("..\\generated\\gaussians.data")
+        } else {
+            include!("../generated/gaussians.data")
+        };
+        let mut random = Random::new(SEED);
+        for integer in test_data {
+            assert_eq!(random.next_gaussian(), integer);
+        }
+    }
 
     #[test]
     fn next_i32() {
