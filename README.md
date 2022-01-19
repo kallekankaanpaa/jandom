@@ -5,6 +5,8 @@ A port of Java `java.util.Random` to Rust.
 The implementation follows the public API of Java 17 Random. The method signatures have been changed to be more rusty, 
 for example, `nextInt` -> `next_i32`, `nextDouble` -> `next_f64`, `nextGaussian` -> `next_gaussian`, etc.
 
+The library uses nightly toolchain to take advantage of [LazySync](https://doc.rust-lang.org/std/lazy/struct.SyncLazy.html).
+
 Example usages can be found in the `examples` directory.
 
 ## Contributing
