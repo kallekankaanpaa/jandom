@@ -1,4 +1,4 @@
 # jandom
 
-A port of Java's `java.util.Random` to Rust.
+A port of Java `java.util.Random` to Rust.
 
