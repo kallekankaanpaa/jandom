@@ -11,7 +11,7 @@ public class GenRandomResults {
 
     static long seed = 12345;
     static int dataLength = 100;
-    static Path outputPath = Path.of("./generated");
+    static Path outputPath = Path.of(System.getenv("OUT_DIR"));
 
     public static void main(String[] args) {
         System.out.println("Running random data generator");
