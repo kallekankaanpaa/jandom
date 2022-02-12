@@ -8,7 +8,7 @@
 
 use std::fmt;
 use std::lazy::SyncLazy;
-use std::sync::Mutex;
+use std::sync::atomic::{AtomicI64, Ordering};
 
 #[cfg(test)]
 mod tests;
@@ -24,7 +24,7 @@ const MASK: i64 = (1 << 48) - 1;
 
 /// A pseudorandom number generator
 pub struct Random {
-    state: i64,
+    state: AtomicI64,
     next_next_gaussian: Option<f64>,
 }
 
@@ -34,7 +34,7 @@ impl Random {
     /// This has the same effect as calling the constructor with seed param in Java.
     pub fn new(seed: i64) -> Self {
         Self {
-            state: Self::initalize_state(seed),
+            state: AtomicI64::new(Self::initalize_state(seed)),
             next_next_gaussian: None,
         }
     }
@@ -49,8 +49,24 @@ impl Random {
         if bits > 32 {
             panic!("Can't return more than 32 random bits");
         }
-        self.state = self.state.wrapping_mul(MULTIPLIER).wrapping_add(INCREMENT) & MASK;
-        (self.state >> (48 - bits)) as i32
+
+        let mut previous_state = self.state.load(Ordering::Acquire);
+        loop {
+            let new_state = previous_state
+                .wrapping_mul(MULTIPLIER)
+                .wrapping_add(INCREMENT)
+                & MASK;
+            // Using weak since it allows optimizations on certain (e.g. ARM) architectures
+            match self.state.compare_exchange_weak(
+                previous_state,
+                new_state,
+                Ordering::AcqRel,
+                Ordering::Relaxed,
+            ) {
+                Ok(_) => return (new_state >> (48 - bits)) as i32,
+                Err(state) => previous_state = state,
+            }
+        }
     }
 
     /// Returns the next pseudorandom, uniformly distributed [i32] value from this random
@@ -190,20 +206,31 @@ impl fmt::Debug for Random {
     }
 }
 
-static SEED_UNIQUFIER: SyncLazy<Mutex<i64>> = SyncLazy::new(|| Mutex::new(8682522807148012));
+static SEED_UNIQUFIER: SyncLazy<AtomicI64> = SyncLazy::new(|| AtomicI64::new(8682522807148012));
 
 /// The default implementation represents the Java Random constructor with no params.
 impl Default for Random {
     fn default() -> Self {
         use std::time::{SystemTime, UNIX_EPOCH};
         const MULTIPLIER: i64 = 1181783497276652981;
-        let mut uniquifier = SEED_UNIQUFIER.lock().unwrap();
 
-        *uniquifier = uniquifier.wrapping_mul(MULTIPLIER);
-
-        let elapsed = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("SystemTime returned value earlier than UNIX_EPOCH");
-        Self::new(*uniquifier ^ (elapsed.as_nanos() as i64))
+        let mut current = SEED_UNIQUFIER.load(Ordering::Acquire);
+        loop {
+            let new = current.wrapping_mul(MULTIPLIER);
+            match SEED_UNIQUFIER.compare_exchange_weak(
+                current,
+                new,
+                Ordering::AcqRel,
+                Ordering::Relaxed,
+            ) {
+                Ok(_) => {
+                    let elapsed = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .expect("SystemTime returned value earlier than UNIX_EPOCH");
+                    return Self::new(new ^ (elapsed.as_nanos() as i64));
+                }
+                Err(uniquifier) => current = uniquifier,
+            }
+        }
     }
 }
