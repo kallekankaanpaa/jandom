@@ -9,6 +9,7 @@
 use std::fmt;
 use std::lazy::SyncLazy;
 use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::{Arc, Mutex};
 
 #[cfg(test)]
 mod tests;
@@ -25,7 +26,7 @@ const MASK: i64 = (1 << 48) - 1;
 /// A pseudorandom number generator
 pub struct Random {
     state: AtomicI64,
-    next_next_gaussian: Option<f64>,
+    next_next_gaussian: Arc<Mutex<Option<f64>>>,
 }
 
 impl Random {
@@ -35,7 +36,7 @@ impl Random {
     pub fn new(seed: i64) -> Self {
         Self {
             state: AtomicI64::new(Self::initalize_state(seed)),
-            next_next_gaussian: None,
+            next_next_gaussian: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -169,8 +170,10 @@ impl Random {
     /// (approximately) the usual normal distribution with mean 0.0 and standard deviation
     /// 1.0, is pseudorandomly generated and returned.
     pub fn next_gaussian(&mut self) -> f64 {
-        if let Some(gaussian) = self.next_next_gaussian {
-            self.next_next_gaussian = None;
+        let mutex = self.next_next_gaussian.clone();
+        let mut next_gaussian = mutex.lock().unwrap();
+        if let Some(gaussian) = *next_gaussian {
+            *next_gaussian = None;
             gaussian
         } else {
             let mut s;
@@ -190,7 +193,7 @@ impl Random {
             unsafe {
                 multiplier = sqrt(-2_f64 * log(s) / s);
             }
-            self.next_next_gaussian = Some(v2 * multiplier);
+            *next_gaussian = Some(v2 * multiplier);
             v1 * multiplier
         }
     }
