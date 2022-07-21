@@ -39,7 +39,7 @@ impl Random {
     }
 
     /// Calculates the the initial state from a seed
-    fn initalize_state(seed: i64) -> i64 {
+    const fn initalize_state(seed: i64) -> i64 {
         seed ^ MULTIPLIER & MASK
     }
 
@@ -154,9 +154,9 @@ impl Random {
         }
         if max < bytes.len() {
             let mut random = self.next(32);
-            for j in max..bytes.len() {
-                bytes[j] = random as i8;
-                random = random >> 8;
+            for byte in bytes.iter_mut().skip(max) {
+                *byte = random as i8;
+                random >>= 8;
             }
         }
     }
@@ -207,7 +207,7 @@ impl fmt::Debug for Random {
     }
 }
 
-const SEED_UNIQUFIER: AtomicI64 = AtomicI64::new(8682522807148012);
+static SEED_UNIQUFIER: AtomicI64 = AtomicI64::new(8682522807148012);
 
 /// The default implementation represents the Java Random constructor with no params.
 impl Default for Random {
