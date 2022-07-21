@@ -1,4 +1,3 @@
-#![feature(once_cell)]
 //! Pseudorandom number generator implemented with the same algorithm and parameters as
 //! `java.util.Random`.
 //!
@@ -7,7 +6,6 @@
 //! in Java.
 
 use std::fmt;
-use std::lazy::SyncLazy;
 use std::sync::atomic::{AtomicI64, Ordering};
 use std::sync::{Arc, Mutex};
 
@@ -209,7 +207,7 @@ impl fmt::Debug for Random {
     }
 }
 
-static SEED_UNIQUFIER: SyncLazy<AtomicI64> = SyncLazy::new(|| AtomicI64::new(8682522807148012));
+const SEED_UNIQUFIER: AtomicI64 = AtomicI64::new(8682522807148012);
 
 /// The default implementation represents the Java Random constructor with no params.
 impl Default for Random {

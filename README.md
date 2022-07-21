@@ -8,7 +8,6 @@ Jandom differs from other java Random implementations by having true feature par
 same values as the Java equivalent. 
 
 Jandom makes use of atomics and Mutex to be thread safe by default.
-The library uses nightly toolchain to take advantage of [LazySync](https://doc.rust-lang.org/std/lazy/struct.SyncLazy.html).
 
 Example usages can be found in the `examples` directory.
 
