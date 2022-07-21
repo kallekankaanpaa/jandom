@@ -13,8 +13,11 @@ use std::sync::{Arc, Mutex};
 mod tests;
 
 extern "C" {
-    fn sqrt(x: f64) -> f64;
-    fn log(x: f64) -> f64;
+
+    fn __ieee754_sqrt(x: f64) -> f64;
+    fn __ieee754_log(x: f64) -> f64;
+    //fn sqrt(x: f64) -> f64;
+    //fn log(x: f64) -> f64;
 }
 
 const MULTIPLIER: i64 = 0x5deece66d;
@@ -189,7 +192,7 @@ impl Random {
             // SAFETY: `sqrt` and `log` are C functions which are safe to call with any
             // arguments.
             unsafe {
-                multiplier = sqrt(-2_f64 * log(s) / s);
+                multiplier = __ieee754_sqrt(-2_f64 * __ieee754_log(s) / s);
             }
             *next_gaussian = Some(v2 * multiplier);
             v1 * multiplier
