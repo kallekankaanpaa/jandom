@@ -2,7 +2,7 @@
 //! `java.util.Random`.
 //!
 //! This crate has feature parity with the Java 17 implementation of `Random`. The crate
-//! includes the sources for fdlibm (freely distributable libm) which is used by StrictMath
+//! includes the sources for fdlibm (freely distributable libm) which is used by `StrictMath`
 //! in Java.
 
 use std::fmt;
@@ -17,7 +17,7 @@ extern "C" {
     fn __ieee754_log(x: f64) -> f64;
 }
 
-const MULTIPLIER: i64 = 0x5deece66d;
+const MULTIPLIER: i64 = 0x0005_deec_e66d;
 const INCREMENT: i64 = 0xb;
 const MASK: i64 = (1 << 48) - 1;
 
@@ -31,6 +31,7 @@ impl Random {
     /// Creates a new random number generator using a single [i64] seed.
     ///
     /// This has the same effect as calling the constructor with seed param in Java.
+    #[must_use]
     pub fn new(seed: i64) -> Self {
         Self {
             state: AtomicI64::new(Self::initalize_state(seed)),
@@ -44,10 +45,12 @@ impl Random {
     }
 
     /// Advances the RNG by one and returns random bits.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `bits` is bigger than 32
     fn next(&mut self, bits: u8) -> i32 {
-        if bits > 32 {
-            panic!("Can't return more than 32 random bits");
-        }
+        assert!(bits <= 32, "can't return more than 32 random bits");
 
         let mut previous_state = self.state.load(Ordering::Acquire);
         loop {
@@ -81,15 +84,17 @@ impl Random {
     /// The general contract of `next_i32_bounded` is that one [i32] value in the specified range is
     /// pseudorandomly generated and returned. All bound possible [i32] values are produced
     /// with (approximately) equal probability.
+    ///
+    /// # Panics
+    ///
+    /// Panics if bound is zero or negative
     pub fn next_i32_bounded(&mut self, bound: i32) -> i32 {
-        if bound <= 0 {
-            panic!("bound can't be less than 1");
-        }
+        assert!(bound > 0, "bound must be positive");
 
         // bound is power of 2
         if (bound & -bound) == bound {
-            let bound_i64 = bound as i64;
-            let next_i64 = self.next(31) as i64;
+            let bound_i64 = i64::from(bound);
+            let next_i64 = i64::from(self.next(31));
             let result = bound_i64.wrapping_mul(next_i64) >> 31;
             result as i32
         } else {
@@ -107,7 +112,7 @@ impl Random {
     /// number generator's sequence. The general contract of `next_i64` is that one long
     /// value is pseudorandomly generated and returned.
     pub fn next_i64(&mut self) -> i64 {
-        ((self.next(32) as i64) << 32) + (self.next(32) as i64)
+        (i64::from(self.next(32)) << 32) + i64::from(self.next(32))
     }
 
     /// Returns the next pseudorandom, uniformly distributed boolean value from this
@@ -137,7 +142,8 @@ impl Random {
     /// uniformly from the range 0.0 (inclusive) to 1.0 (exclusive), is pseudorandomly
     /// generated and returned.
     pub fn next_f64(&mut self) -> f64 {
-        ((((self.next(26) as i64) << 27) + (self.next(27) as i64)) as f64) / ((1_i64 << 53) as f64)
+        (((i64::from(self.next(26)) << 27) + i64::from(self.next(27))) as f64)
+            / ((1_i64 << 53) as f64)
     }
 
     /// Generates random bytes and places them into a user-supplied i8 slice. The
@@ -207,10 +213,11 @@ impl fmt::Debug for Random {
     }
 }
 
-static SEED_UNIQUFIER: AtomicI64 = AtomicI64::new(8682522807148012);
+static SEED_UNIQUFIER: AtomicI64 = AtomicI64::new(8_682_522_807_148_012);
 
 /// The default implementation represents the Java Random constructor with no params.
 impl Default for Random {
+    #[inline]
     fn default() -> Self {
         use std::time::{SystemTime, UNIX_EPOCH};
         const MULTIPLIER: i64 = 1181783497276652981;

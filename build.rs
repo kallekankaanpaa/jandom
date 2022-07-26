@@ -1,7 +1,7 @@
 use std::{env, process};
 
 fn main() {
-    if let Err(_) = env::var("DOCS_RS") {
+    if env::var("DOCS_RS").is_err() {
         let out_dir = env::var("OUT_DIR").unwrap();
         println!("cargo:rerun-if-changed=generators/GenRandomResults.java");
 
