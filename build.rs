@@ -24,7 +24,5 @@ fn main() {
         .define("__LITTLE_ENDIAN", None)
         .file("external\\fdlibm\\e_sqrt.c")
         .file("external\\fdlibm\\e_log.c")
-        .file("external\\fdlibm\\w_sqrt.c")
-        .file("external\\fdlibm\\w_log.c")
         .compile("fdlibm");
 }
