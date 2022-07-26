@@ -1,22 +1,22 @@
-use std::fs;
-use std::process::Command;
+use std::{env, process};
 
 fn main() {
-    println!("cargo:rerun-if-changed=generators/GenRandomResults.java");
+    if let Err(_) = env::var("DOCS_RS") {
+        let out_dir = env::var("OUT_DIR").unwrap();
+        println!("cargo:rerun-if-changed=generators/GenRandomResults.java");
+
+        process::Command::new("javac")
+            .args(["generators/GenRandomResults.java", "-d", &out_dir])
+            .output()
+            .expect("could not compile generator");
+
+        process::Command::new("java")
+            .args(["-cp", &out_dir, "GenRandomResults"])
+            .output()
+            .expect("could not run generator");
+    }
+
     println!("cargo:rerun-if-changed=external");
-
-    Command::new("javac")
-        .args(["generators/GenRandomResults.java"])
-        .output()
-        .expect("could not compile generator");
-
-    Command::new("java")
-        .args(["-cp", "generators", "GenRandomResults"])
-        .output()
-        .expect("could not run generator");
-
-    fs::remove_file("generators/GenRandomResults.class").unwrap();
-
     cc::Build::new()
         .include("external")
         .define("_IEEE_LIBM", None)
