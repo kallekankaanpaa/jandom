@@ -1,6 +1,6 @@
 [package]
 name = "jandom"
-version = "0.3.3"
+version = "0.3.4"
 edition = "2021"
 authors = ["Kalle Kankaanpää <kalle.kankaanpaa@protonmail.com>"]
 description = "Port of java.util.Random"

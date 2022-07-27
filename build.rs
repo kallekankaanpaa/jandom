@@ -1,4 +1,4 @@
-use std::{env, process};
+use std::{env, process, path};
 
 fn main() {
     if env::var("DOCS_RS").is_err() {
@@ -20,9 +20,8 @@ fn main() {
     cc::Build::new()
         .include("external")
         .define("_IEEE_LIBM", None)
-        .define("__STDC__", None)
         .define("__LITTLE_ENDIAN", None)
-        .file("external\\fdlibm\\e_sqrt.c")
-        .file("external\\fdlibm\\e_log.c")
+        .file(path::Path::new("external/fdlibm/e_sqrt.c"))
+        .file(path::Path::new("external/fdlibm/e_log.c"))
         .compile("fdlibm");
 }
