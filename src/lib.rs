@@ -9,6 +9,7 @@ use std::fmt;
 use std::sync::atomic::{AtomicI64, Ordering};
 use std::sync::{Arc, Mutex};
 
+mod system;
 #[cfg(test)]
 mod tests;
 
@@ -219,8 +220,7 @@ static SEED_UNIQUFIER: AtomicI64 = AtomicI64::new(8_682_522_807_148_012);
 impl Default for Random {
     #[inline]
     fn default() -> Self {
-        use std::time::{SystemTime, UNIX_EPOCH};
-        const MULTIPLIER: i64 = 1181783497276652981;
+        const MULTIPLIER: i64 = 1_181_783_497_276_652_981;
 
         let mut current = SEED_UNIQUFIER.load(Ordering::Acquire);
         loop {
@@ -231,12 +231,7 @@ impl Default for Random {
                 Ordering::AcqRel,
                 Ordering::Relaxed,
             ) {
-                Ok(_) => {
-                    let elapsed = SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .expect("SystemTime returned value earlier than UNIX_EPOCH");
-                    return Self::new(new ^ (elapsed.as_nanos() as i64));
-                }
+                Ok(_) => return Self::new(new ^ system::nano_time()),
                 Err(uniquifier) => current = uniquifier,
             }
         }

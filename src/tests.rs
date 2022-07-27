@@ -79,3 +79,14 @@ fn next_bytes() {
         assert_eq!(test_data[i], bytes[i]);
     }
 }
+
+#[test]
+fn default() {
+    use std::sync::atomic::Ordering;
+    let first = Random::default();
+    let second = Random::default();
+    assert_ne!(
+        first.state.load(Ordering::Acquire),
+        second.state.load(Ordering::Acquire)
+    );
+}
