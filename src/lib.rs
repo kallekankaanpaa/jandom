@@ -9,14 +9,10 @@ use std::fmt;
 use std::sync::atomic::{AtomicI64, Ordering};
 use std::sync::{Arc, Mutex};
 
+mod fdlibm;
 mod system;
 #[cfg(test)]
 mod tests;
-
-extern "C" {
-    fn __ieee754_sqrt(x: f64) -> f64;
-    fn __ieee754_log(x: f64) -> f64;
-}
 
 const MULTIPLIER: i64 = 0x0005_deec_e66d;
 const INCREMENT: i64 = 0xb;
@@ -192,12 +188,7 @@ impl Random {
                     break;
                 }
             }
-            let multiplier;
-            // SAFETY: `sqrt` and `log` are C functions which are safe to call with any
-            // arguments.
-            unsafe {
-                multiplier = __ieee754_sqrt(-2_f64 * __ieee754_log(s) / s);
-            }
+            let multiplier = fdlibm::sqrt(-2_f64 * fdlibm::log(s) / s);
             *next_gaussian = Some(v2 * multiplier);
             v1 * multiplier
         }
