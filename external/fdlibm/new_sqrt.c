@@ -1,3 +1,29 @@
+/* --- PRINTF_BYTE_TO_BINARY macro's --- */
+#define PRINTF_BINARY_SEPARATOR
+#define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
+#define PRINTF_BYTE_TO_BINARY_INT8(i)    \
+    (((i) & 0x80ll) ? '1' : '0'), \
+    (((i) & 0x40ll) ? '1' : '0'), \
+    (((i) & 0x20ll) ? '1' : '0'), \
+    (((i) & 0x10ll) ? '1' : '0'), \
+    (((i) & 0x08ll) ? '1' : '0'), \
+    (((i) & 0x04ll) ? '1' : '0'), \
+    (((i) & 0x02ll) ? '1' : '0'), \
+    (((i) & 0x01ll) ? '1' : '0')
+
+#define PRINTF_BINARY_PATTERN_INT16 \
+    PRINTF_BINARY_PATTERN_INT8               PRINTF_BINARY_SEPARATOR              PRINTF_BINARY_PATTERN_INT8
+#define PRINTF_BYTE_TO_BINARY_INT16(i) \
+    PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
+#define PRINTF_BINARY_PATTERN_INT32 \
+    PRINTF_BINARY_PATTERN_INT16              PRINTF_BINARY_SEPARATOR              PRINTF_BINARY_PATTERN_INT16
+#define PRINTF_BYTE_TO_BINARY_INT32(i) \
+    PRINTF_BYTE_TO_BINARY_INT16((i) >> 16), PRINTF_BYTE_TO_BINARY_INT16(i)
+#define PRINTF_BINARY_PATTERN_INT64    \
+    PRINTF_BINARY_PATTERN_INT32              PRINTF_BINARY_SEPARATOR              PRINTF_BINARY_PATTERN_INT32
+#define PRINTF_BYTE_TO_BINARY_INT64(i) \
+    PRINTF_BYTE_TO_BINARY_INT32((i) >> 32), PRINTF_BYTE_TO_BINARY_INT32(i)
+/* --- end macros --- */
 /* @(#)e_sqrt.c 1.3 95/01/18 */
 /*
  * ====================================================
@@ -81,6 +107,8 @@
  */
 
 #include "fdlibm.h"
+#include <stdio.h>
+
 
 #ifdef __STDC__
 static	const double	one	= 1.0, tiny=1.0e-300;
@@ -89,9 +117,9 @@ static	double	one	= 1.0, tiny=1.0e-300;
 #endif
 
 #ifdef __STDC__
-	double __ieee754_sqrt(double x)
+	double __ieee754_new_sqrt(double x)
 #else
-	double __ieee754_sqrt(x)
+	double __ieee754_new_sqrt(x)
 	double x;
 #endif
 {
@@ -116,27 +144,38 @@ static	double	one	= 1.0, tiny=1.0e-300;
 	}
     /* normalize x */
 	m = (ix0>>20);
+    printf("----------------BEFORE------------------\n");
+    printf("ix0 =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0));
+    printf("ix1 =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix1));
+    printf("m =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(m));
 	if(m==0) {				/* subnormal x */
 	    while(ix0==0) {
 			m -= 21;
 			ix0 |= (ix1>>11); 
 			ix1 <<= 21;
 	    }
-	    for(i=0;(ix0&0x00100000)==0;i++) ix0<<=1;
+	    for(i=0; ix0 & 0x00100000 == 0; i++) {
+            ix0<<=1;
+        }
 	    m -= i-1;
-	    ix0 |= (ix1>>(32-i));
+	    ix0 |= ix1 >> (32 - i);
 	    ix1 <<= i;
 	}
 	m -= 1023;	/* unbias exponent */
-	ix0 = (ix0&0x000fffff)|0x00100000;
+	ix0 = (ix0 & 0x000fffff) | 0x00100000;
 	if(m&1){	/* odd m, double x to make it even */
-	    ix0 += ix0 + ((ix1&sign)>>31);
+	    ix0 += ix0 + (ix1>>31);
 	    ix1 += ix1;
 	}
 	m >>= 1;	/* m = [m/2] */
+    printf("----------------AFTER------------------\n");
+    printf("whole =\t" PRINTF_BINARY_PATTERN_INT32 PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0), PRINTF_BYTE_TO_BINARY_INT32(ix1));
+    printf("ix0 =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0));
+    printf("ix1 =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix1));
+    printf("m =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(m));
 
     /* generate sqrt(x) bit by bit */
-	ix0 += ix0 + ((ix1&sign)>>31);
+	ix0 += ix0 + (ix1>>31);
 	ix1 += ix1;
 	q = q1 = s0 = s1 = 0;	/* [q,q1] = sqrt(x) */
 	r = 0x00200000;		/* r = moving bit from right to left */
@@ -148,7 +187,7 @@ static	double	one	= 1.0, tiny=1.0e-300;
 			ix0 -= t; 
 			q   += r; 
 	    } 
-	    ix0 += ix0 + ((ix1&sign)>>31);
+	    ix0 += ix0 + (ix1>>31);
 	    ix1 += ix1;
 	    r>>=1;
 	}
@@ -165,7 +204,7 @@ static	double	one	= 1.0, tiny=1.0e-300;
 		ix1 -= t1;
 		q1  += r;
 	    }
-	    ix0 += ix0 + ((ix1&sign)>>31);
+	    ix0 += ix0 + (ix1>>31);
 	    ix1 += ix1;
 	    r>>=1;
 	}

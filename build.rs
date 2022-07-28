@@ -1,7 +1,7 @@
 use std::{env, process};
 
 fn main() {
-    if env::var("DOCS_RS").is_err() {
+    if cfg!(test) && env::var("DOCS_RS").is_err() {
         let out_dir = env::var("OUT_DIR").unwrap();
         println!("cargo:rerun-if-changed=generators/GenRandomResults.java");
 
@@ -15,4 +15,14 @@ fn main() {
             .output()
             .expect("could not run generator");
     }
+    println!("cargo:rerun-if-changed=external");
+    use std::path;
+    cc::Build::new()
+        .include("external")
+        .define("_IEEE_LIBM", None)
+        .define("__LITTLE_ENDIAN", None)
+        .file(path::Path::new("external/fdlibm/e_sqrt.c"))
+        .file(path::Path::new("external/fdlibm/new_sqrt.c"))
+        .file(path::Path::new("external/fdlibm/e_log.c"))
+        .compile("fdlibm");
 }

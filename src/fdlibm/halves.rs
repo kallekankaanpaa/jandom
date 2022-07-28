@@ -1,14 +1,4 @@
-pub fn sqrt(x: f64) -> f64 {
-    let _ = x;
-    unimplemented!()
-}
-
-pub fn log(x: f64) -> f64 {
-    let _ = x;
-    unimplemented!()
-}
-
-trait Halves {
+pub trait Halves {
     type Half;
     fn high(&self) -> Self::Half;
     fn low(&self) -> Self::Half;
@@ -41,7 +31,7 @@ impl Halves for f64 {
     }
 }
 
-trait FromHalves {
+pub trait FromHalves {
     type Half;
     fn from_halves(high: Self::Half, low: Self::Half) -> Self;
 }
