@@ -6,11 +6,48 @@ extern "C" {
 }
 #[test]
 fn asdf() {
-    let x = 12.345;
-    unsafe {
-        __ieee754_new_sqrt(x);
+    //let x = 12.345;
+    let x = f64::from_bits(0x1);
+    assert_eq!(unsafe { __ieee754_new_sqrt(x) }, super::sqrt(x))
+}
+
+#[test]
+fn random() {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    let mut integers = [0u64; 128];
+    rng.fill(&mut integers);
+    let doubles = integers.map(|integer| f64::from_bits(integer));
+    for x in doubles {
+        let c = unsafe { __ieee754_sqrt(x) };
+        let rust = super::sqrt(x);
+        if c.is_nan() {
+            assert!(rust.is_nan());
+        } else {
+            assert_eq!(unsafe { __ieee754_sqrt(x) }, super::sqrt(x));
+        }
     }
-    super::sqrt(x);
+}
+#[test]
+fn all_bit_patterns() {
+    let start = std::time::Instant::now();
+    for bits in 0_u64..0x8000000000000000_u64 {
+        let x = f64::from_bits(bits);
+        let c = unsafe { __ieee754_sqrt(x) };
+        let rust = super::sqrt(x);
+        if c.is_nan() {
+            assert!(rust.is_nan());
+        } else {
+            assert_eq!(
+                unsafe { __ieee754_sqrt(x) },
+                super::sqrt(x),
+                "bits = {bits:064b}"
+            );
+        }
+    }
+
+    let duration = start.elapsed();
+    println!("Time elapsed: {duration:?}");
 }
 
 #[test]

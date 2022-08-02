@@ -144,23 +144,29 @@ static	double	one	= 1.0, tiny=1.0e-300;
 	}
     /* normalize x */
 	m = (ix0>>20);
+	/*
     printf("----------------BEFORE------------------\n");
+    printf("whole =\t" PRINTF_BINARY_PATTERN_INT32 PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0), PRINTF_BYTE_TO_BINARY_INT32(ix1));
     printf("ix0 =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0));
     printf("ix1 =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix1));
     printf("m =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(m));
+	*/
 	if(m==0) {				/* subnormal x */
 	    while(ix0==0) {
 			m -= 21;
 			ix0 |= (ix1>>11); 
 			ix1 <<= 21;
 	    }
-	    for(i=0; ix0 & 0x00100000 == 0; i++) {
+	    for(i=0; (ix0 & 0x00100000) == 0; i++) {
             ix0<<=1;
+			printf("ix0 = \t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0));
         }
 	    m -= i-1;
 	    ix0 |= ix1 >> (32 - i);
 	    ix1 <<= i;
 	}
+    printf("ix =\t" PRINTF_BINARY_PATTERN_INT32 PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0), PRINTF_BYTE_TO_BINARY_INT32(ix1));
+    printf("m =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(m));
 	m -= 1023;	/* unbias exponent */
 	ix0 = (ix0 & 0x000fffff) | 0x00100000;
 	if(m&1){	/* odd m, double x to make it even */
@@ -168,11 +174,13 @@ static	double	one	= 1.0, tiny=1.0e-300;
 	    ix1 += ix1;
 	}
 	m >>= 1;	/* m = [m/2] */
-    printf("----------------AFTER------------------\n");
+	/*
+    printf("----------------MIDDLE------------------\n");
     printf("whole =\t" PRINTF_BINARY_PATTERN_INT32 PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0), PRINTF_BYTE_TO_BINARY_INT32(ix1));
     printf("ix0 =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0));
     printf("ix1 =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix1));
     printf("m =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(m));
+	*/
 
     /* generate sqrt(x) bit by bit */
 	ix0 += ix0 + (ix1>>31);
@@ -181,51 +189,82 @@ static	double	one	= 1.0, tiny=1.0e-300;
 	r = 0x00200000;		/* r = moving bit from right to left */
 
 	while(r!=0) {
-	    t = s0+r; 
-	    if(t<=ix0) { 
-			s0   = t+r; 
+    	//printf("r =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(r));
+	    t = s0 + r; 
+    	//printf("t =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(t));
+    	//printf("ix0 =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0));
+	    if(t <= ix0) { 
+			//printf("smaller\n");
+			s0   = t + r; 
 			ix0 -= t; 
 			q   += r; 
 	    } 
+    	//printf("s0 =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(s0));
+    	//printf("q =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(q));
 	    ix0 += ix0 + (ix1>>31);
 	    ix1 += ix1;
 	    r>>=1;
+		//printf("----------------------------------------\n");
 	}
 
 	r = sign;
-	while(r!=0) {
-	    t1 = s1+r; 
+	while(r != 0) {
+	    t1 = s1 + r; 
 	    t  = s0;
-	    if((t<ix0)||((t==ix0)&&(t1<=ix1))) { 
-		s1  = t1+r;
-		if(((t1&sign)==sign)&&(s1&sign)==0) s0 += 1;
-		ix0 -= t;
-		if (ix1 < t1) ix0 -= 1;
-		ix1 -= t1;
-		q1  += r;
+	    if((t < ix0) || ((t == ix0) && (t1 <= ix1))) { 
+			s1  = t1 + r;
+			if(((t1 & sign) == sign) && (s1 & sign) ==0 ) {
+				s0 += 1;
+			}
+			ix0 -= t;
+			if (ix1 < t1) {
+				ix0 -= 1;
+			} 
+			ix1 -= t1;
+			q1  += r;
 	    }
 	    ix0 += ix0 + (ix1>>31);
 	    ix1 += ix1;
 	    r>>=1;
 	}
+    //printf("----------------BEFORE------------------\n");
+	/*
+    printf("whole =\t" PRINTF_BINARY_PATTERN_INT32 PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0), PRINTF_BYTE_TO_BINARY_INT32(ix1));
+    printf("ix0 =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0));
+    printf("ix1 =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix1));
+    printf("m =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(m));
+	*/
+    //printf("q =\t" PRINTF_BINARY_PATTERN_INT32 PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(q), PRINTF_BYTE_TO_BINARY_INT32(q1));
+
 
     /* use floating add to find out rounding direction */
-	if((ix0|ix1)!=0) {
+	if( (ix0|ix1) != 0) {
 	    z = one-tiny; /* trigger inexact flag */
 	    if (z>=one) {
 	        z = one+tiny;
-	        if (q1==(unsigned)0xffffffff) { q1=0; q += 1;}
-		else if (z>one) {
-		    if (q1==(unsigned)0xfffffffe) q+=1;
-		    q1+=2; 
-		} else
-	            q1 += (q1&1);
-	    }
+	        if (q1==(unsigned)0xffffffff) { 
+				q1=0;
+				q += 1;
+			} else if (z>one) {
+				if (q1==(unsigned)0xfffffffe) {
+					q+=1;
+				};
+				q1+=2; 
+			} else {
+				q1 += (q1&1);
+			}
+		}
 	}
-	ix0 = (q>>1)+0x3fe00000;
-	ix1 =  q1>>1;
-	if ((q&1)==1) ix1 |= sign;
-	ix0 += (m <<20);
+	
+    //printf("----------------AFTER------------------\n");
+    //printf("q =\t" PRINTF_BINARY_PATTERN_INT32 PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(q), PRINTF_BYTE_TO_BINARY_INT32(q1));
+	ix0 = (q >> 1) + 0x3fe00000;
+	ix1 =  q1 >> 1;
+	if ((q & 1) == 1) ix1 |= sign;
+    //printf("ix =\t" PRINTF_BINARY_PATTERN_INT32 PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0), PRINTF_BYTE_TO_BINARY_INT32(ix1));
+	//printf("m =\t" PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(m));
+	ix0 += (m << 20);
+    //printf("result =\t" PRINTF_BINARY_PATTERN_INT32 PRINTF_BINARY_PATTERN_INT32 "\n", PRINTF_BYTE_TO_BINARY_INT32(ix0), PRINTF_BYTE_TO_BINARY_INT32(ix1));
 	__HI(z) = ix0;
 	__LO(z) = ix1;
 	return z;

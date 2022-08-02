@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests;
 
-use super::halves::{FromHalves, Halves};
 use super::parts::Parts;
 use super::{ONE, TINY};
 
@@ -26,23 +25,20 @@ pub fn sqrt(x: f64) -> f64 {
         return f64::NAN;
     }
 
-    let (mut sign, mut exponent, mut significand) = x.parts();
-    println!("------------------------BEFORE----------------");
-    println!("significand =\t{:064b}", significand);
-    println!("exponent =\t{:011b}", exponent);
+    let (_, mut exponent, mut significand) = x.parts();
 
     if x.is_subnormal() {
-        // while last 21 bits of the significand are zero (bits 33..53)
-        // shift significand left by 21
+        // while the leftmost bit of significand is zero
+        // double significand and decrease exponent by 1
         while significand & 0x0010000000000000 == 0 {
             significand <<= 1;
-            exponent -= 1;
+            //exponent -= 1;
+            exponent = exponent.wrapping_sub(1);
         }
-        // while significand has 0 bits shift it left
-        // substract i - 1 from exponent
     }
-    exponent -= 1023;
-    // set exponent of high word to 1
+    exponent = exponent.wrapping_add(1);
+    //exponent -= 1023;
+    exponent = exponent.wrapping_sub(1023);
     significand &= 0x000fffffffffffff;
     significand |= 0x0010000000000000;
 
@@ -51,92 +47,47 @@ pub fn sqrt(x: f64) -> f64 {
         significand <<= 1;
     }
     exponent >>= 1; // exponent = exponent / 2
-    println!("------------------------AFTER----------------");
-    println!("significand =\t{:064b}", significand);
-    println!("exponent =\t{:011b}", exponent);
 
     // Generate sqrt(x) bit by bit
-    let mut r = 0x00200000;
+    significand <<= 1;
+    let mut r: u64 = 0x0020000000000000;
+    let mut s: u64 = 0;
+    let mut q: u64 = 0;
     while r != 0 {
+        let t = s + r;
+        if t <= significand {
+            s = t + r;
+            significand -= t;
+            q |= r;
+        }
+        significand <<= 1;
         r >>= 1;
     }
 
-    /*
-       m -= 1023;
-       h = h & 0x000fffff | 0x00100000;
-       if m & 1 == 1 {
-           h += h + (l & 0x80000000) >> 31;
-           l += l;
-       }
-       m >>= 1;
+    // use floating addition to find out rounding direction
+    if significand != 0 {
+        let mut z = ONE - TINY;
+        if z >= ONE {
+            z = ONE + TINY;
+            if q & 0xffffffff == 0xffffffff {
+                q &= 0xffffffff00000000;
+                q += 1 << 32;
+            } else if z > ONE {
+                if q & 0xffffffff == 0xfffffffe {
+                    q += 1 << 32;
+                }
+                q += 2;
+            } else {
+                q += q & 1;
+            }
+        }
+    }
 
-       h += h + (l & 0x80000000) >> 31;
-       l += l;
-       let (mut q, mut q1, mut s0, mut s1, mut t) = (0, 0_u32, 0, 0_u32, 0);
-       let mut r = 0x00200000;
+    // Discard the rounding bit and calculate the exponent
+    q >>= 1;
+    exponent += 0x3ff;
 
-       while r != 0 {
-           t = s0 + r;
-           if t <= h {
-               s0 = t + r;
-               h -= t;
-               q += r;
-           }
-           h += h + (l & 0x80000000) >> 31;
-           l += l;
-           r >>= 1;
-       }
-
-       let (mut t, mut t1) = (0, 0_u32);
-       r = 0x80000000;
-       while r != 0 {
-           t1 = s1 + r;
-           t = s0;
-           if t < h || (t == h && t1 <= l) {
-               s1 = t1 + r;
-               if t1 & 0x80000000 == 0x80000000 && s1 & 0x80000000 == 0 {
-                   s0 += 1;
-               }
-               h -= t;
-               if l < t1 {
-                   h -= 1;
-               }
-               l -= t1;
-               q1 += r;
-           }
-           h += h + (l & 0x80000000) >> 31;
-           l += l;
-           r >>= 1;
-       }
-
-       let mut z: f64 = 0.0;
-
-       if h | l != 0 {
-           z = ONE - TINY;
-           if z >= ONE {
-               z = ONE + TINY;
-               if q1 == 0xffffffff {
-                   q1 = 0;
-                   q += 1;
-               }
-           } else if z > ONE {
-               if q1 == 0xfffffffe {
-                   q += 1;
-               }
-               q1 += 2;
-           } else {
-               q1 += q1 & 1;
-           }
-       }
-
-       h = (q >> 1) + 0x3fe00000;
-       l = q1 >> 1;
-       if q & 1 == 1 {
-           l |= 0x80000000;
-       }
-       h += m << 20;
-
-       f64::from_halves(h, l)
-    */
-    f64::from_parts(sign, exponent, significand)
+    // Sign must always be 0 since square root can't be negative
+    // -0 case is handeled before
+    f64::from_parts(0, exponent, q)
 }
